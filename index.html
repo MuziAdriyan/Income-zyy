@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0f1419;
+            --secondary-dark: #1a2332;
+            --tertiary-dark: #232d3f;
+            --accent-blue: #00d4ff;
+            --accent-cyan: #00e5ff;
+            --positive: #10b981;
+            --negative: #ef4444;
+            --warning: #f59e0b;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9b8;
+            --border-color: #2d3748;
+            --shadow: 0 8px 32px rgba(0, 20, 40, 0.3);
+            --shadow-lg: 0 20px 60px rgba(0, 20, 40, 0.5);
+            --glow: 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border-color);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-logo {
+            width: 32px;
+            height: 32px;
+        }
+
+        .nav-group {
+            margin-bottom: 24px;
+        }
+
+        .nav-group-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.08);
+            color: var(--accent-blue);
+        }
+
+        .nav-link.active {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 13px;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .search-box {
+            background: rgba(35, 45, 63, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-date {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .header-icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .header-icon-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .icon-small {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        /* DASHBOARD PAGE */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: rgba(35, 45, 63, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            background: rgba(35, 45, 63, 0.8);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+        }
+
+        .stat-change {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-change.positive {
+            color: var(--positive);
+        }
+
+        .stat-change.negative {
+            color: var(--negative);
+        }
+
+        /* QUICK ACTIONS */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .action-btn {
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.25);
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .action-btn svg {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        /* CHART SECTION */
+        .chart-section {
+            background: rgba(35, 45, 63, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            gap: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* TRANSACTIONS PAGE */
+        .transactions-toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-input {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(35, 45, 63, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .toolbar-select {
+            background: rgba(35, 45, 63, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(35, 45, 63, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .transactions-table thead {
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .transactions-table th {
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .transactions-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .transactions-table tbody tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .transaction-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .transaction-type.income {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--positive);
+        }
+
+        .transaction-type.expense {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--negative);
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .transaction-amount.income {
+            color: var(--positive);
+        }
+
+        .transaction-amount.expense {
+            color: var(--negative);
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .icon-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .icon-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--secondary-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 20, 25, 0.6);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border: none;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+            color: var(--accent-blue);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* TOAST */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            background: rgba(26, 35, 50, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-color: var(--positive);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .toast.success::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--positive);
+        }
+      
+      .toast.error {
+            border-color: var(--negative);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .toast.error::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--negative);
+        }
+
+        /* CONFIRM DIALOG */
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-dialog.active {
+            display: flex;
+        }
+
+        .confirm-content {
+            background: var(--secondary-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .confirm-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .confirm-message {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .confirm-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* SETTINGS PAGE */
+        .settings-form {
+            max-width: 500px;
+        }
+
+        .settings-section {
+            background: rgba(35, 45, 63, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* HIDDEN CONTENT */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 80px;
+                padding: 12px 20px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                display: flex;
+                gap: 20px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                order: 2;
+            }
+
+            .sidebar-header {
+                margin-bottom: 0;
+            }
+
+            .nav-group {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 0;
+            }
+
+            .nav-group-title {
+                display: none;
+            }
+
+            .nav-link {
+                margin-bottom: 0;
+                padding: 8px 12px;
+                white-space: nowrap;
+            }
+
+            .sidebar-footer {
+                display: none;
+            }
+
+            .header {
+                padding: 12px 20px;
+            }
+
+            .header-left {
+                flex: 0;
+            }
+
+            .search-box {
+                max-width: none;
+            }
+
+            .header-date {
+                display: none;
+            }
+
+            .content {
+                padding: 16px 20px;
+                order: 1;
+            }
+
+            .page-title {
+                font-size: 22px;
+                margin-bottom: 16px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .action-btn {
+                justify-content: center;
+            }
+
+            .chart-container {
+                height: 200px;
+            }
+
+            .transactions-toolbar {
+                flex-direction: column;
+            }
+
+            .toolbar-input,
+            .toolbar-select {
+                width: 100%;
+            }
+
+            .transactions-table {
+                font-size: 12px;
+            }
+
+            .transactions-table th,
+            .transactions-table td {
+                padding: 12px 8px;
+            }
+
+            .modal-content {
+                padding: 24px;
+            }
+
+            .form-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .confirm-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-right {
+                gap: 8px;
+            }
+
+            .header-icon-btn {
+                width: 36px;
+                height: 36px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .chart-filters {
+                flex-wrap: wrap;
+            }
+
+            .filter-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .transactions-table {
+                font-size: 11px;
+            }
+
+            .transactions-table th,
+            .transactions-table td {
+                padding: 8px 6px;
+            }
+
+            .toast-container {
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+            }
+
+            .toast {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.4);
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stat-card {
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .stat-card:nth-child(3) { animation-delay: 0.2s; }
+        .stat-card:nth-child(4) { animation-delay: 0.3s; }
+
+        /* NUMBER COUNTER ANIMATION */
+        .counter {
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <svg class="sidebar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M2 12h20M7 7h10v10H7z"></path>
+                </svg>
+                Financial
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-link active" data-page="dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <path d="M3 9h18M3 15h18"></path>
+                    </svg>
+                    Dashboard
+                </div>
+                <div class="nav-link" data-page="income">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2M8 12h8M12 8v8"></path>
+                    </svg>
+                    Income
+                </div>
+                <div class="nav-link" data-page="expense">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2M8 12h8"></path>
+                    </svg>
+                    Expense
+                </div>
+                <div class="nav-link" data-page="transactions">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3h18v18H3zM3 9h18M3 15h18"></path>
+                    </svg>
+                    Transactions
+                </div>
+                <div class="nav-link" data-page="reports">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 4v16h18V4M7 12h2M13 8h2M7 16h2M13 12h2"></path>
+                    </svg>
+                    Reports
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-title">Account</div>
+                <div class="nav-link" data-page="settings">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
+                    </svg>
+                    Settings
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="search-box">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" placeholder="Search transactions..." id="searchInput">
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-date" id="currentDate"></div>
+                    <button class="header-icon-btn">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </button>
+                    <div class="header-icon-btn">
+                        <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <div class="content">
+                <!-- DASHBOARD PAGE -->
+                <div class="page active" id="dashboardPage">
+                    <h1 class="page-title">Dashboard</h1>
+
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Total Income</div>
+                                <div class="stat-icon">
+                                    <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2M9 12h6M12 9v6"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="stat-value counter" id="totalIncomeValue">Rp 0</div>
+                            <div class="stat-change">Last 30 days</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Total Expense</div>
+                                <div class="stat-icon">
+                                    <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2M8 12h8"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="stat-value counter" id="totalExpenseValue">Rp 0</div>
+                            <div class="stat-change">Last 30 days</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Net Profit</div>
+                                <div class="stat-icon">
+                                    <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2l3 7h7l-5.5 4 2 7-6.5-5-6.5 5 2-7L2 9h7l3-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="stat-value counter" id="netProfitValue">Rp 0</div>
+                            <div class="stat-change">Income - Expense</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-label">Balance</div>
+                                <div class="stat-icon">
+                                    <svg class="icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="7" width="20" height="14" rx="2"></rect>
+                                        <path d="M16 4v3M8 4v3M2 11h20"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="stat-value counter" id="balanceValue">Rp 0</div>
+                            <div class="stat-change">Opening + Income - Expense</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-actions">
+                        <button class="action-btn" id="addIncomeBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                            Add Income
+                        </button>
+                        <button class="action-btn" id="addExpenseBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14"></path>
+                            </svg>
+                            Add Expense
+                        </button>
+                        <button class="action-btn" id="viewTransactionsBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h18v18H3z"></path>
+                                <path d="M3 9h18M3 15h18"></path>
+                            </svg>
+                            View Transactions
+                        </button>
+                    </div>
+
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">Income vs Expense</div>
+                            <div class="chart-filters">
+                                <button class="filter-btn active" data-filter="7days">7 Days</button>
+                                <button class="filter-btn" data-filter="30days">30 Days</button>
+                                <button class="filter-btn" data-filter="3months">3 Months</button>
+                                <button class="filter-btn" data-filter="6months">6 Months</button>
+                                <button class="filter-btn" data-filter="1year">1 Year</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INCOME PAGE -->
+                <div class="page" id="incomePage">
+                    <h1 class="page-title">Income</h1>
+                    <button class="action-btn" id="addIncomeBtn2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        Add Income
+                    </button>
+                    <div id="incomeList"></div>
+                </div>
+
+                <!-- EXPENSE PAGE -->
+                <div class="page" id="expensePage">
+                    <h1 class="page-title">Expense</h1>
+                    <button class="action-btn" id="addExpenseBtn2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14"></path>
+                        </svg>
+                        Add Expense
+                    </button>
+                    <div id="expenseList"></div>
+                </div>
+
+                <!-- TRANSACTIONS PAGE -->
+                <div class="page" id="transactionsPage">
+                    <h1 class="page-title">Transactions</h1>
+                    <div class="transactions-toolbar">
+                        <input type="text" class="toolbar-input" id="transactionSearch" placeholder="Search...">
+                        <select class="toolbar-select" id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                        <select class="toolbar-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select class="toolbar-select" id="sortBy">
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="highest">Highest</option>
+                            <option value="lowest">Lowest</option>
+                        </select>
+                    </div>
+                    <table class="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Payment</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- REPORTS PAGE -->
+                <div class="page" id="reportsPage">
+                    <h1 class="page-title">Reports</h1>
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">Income by Category</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="incomeCategoryChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">Expense by Category</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expenseCategoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS PAGE -->
+                <div class="page" id="settingsPage">
+                    <h1 class="page-title">Settings</h1>
+                    <div class="settings-form">
+                        <div class="settings-section">
+                            <h3 class="settings-title">Opening Balance</h3>
+                            <div class="form-group">
+                                <label class="form-label">Set Your Initial Balance</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="number" class="form-input" id="openingBalance" placeholder="0" style="flex: 1;">
+                                    <button class="btn btn-primary" id="saveBalanceBtn">Save</button>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 12px;">
+                                Current: <span id="currentOpeningBalance">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-title">Data Management</h3>
+                            <div class="form-group">
+                                <button class="btn btn-secondary" id="exportDataBtn" style="width: 100%;">Export Data (JSON)</button>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-secondary" id="clearDataBtn" style="width: 100%; color: var(--negative); border-color: rgba(239, 68, 68, 0.3);">Clear All Data</button>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="settings-title">About</h3>
+                            <div style="font-size: 14px; color: var(--text-secondary);">
+                                Financial Dashboard v1.0<br>
+                                A modern personal finance tracker
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTION MODAL -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Add Income</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+
+            <form id="transactionForm">
+                <input type="hidden" id="transactionType" value="income">
+                <input type="hidden" id="transactionId">
+
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input type="number" class="form-input" id="amount" placeholder="0" min="0" step="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="category" required>
+                        <option value="">Select category</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="description" placeholder="e.g., Monthly salary">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" id="payment" required>
+                        <option value="">Select payment</option>
+                        <option value="Bank">Bank</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="E-Wallet">E-Wallet</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div class="confirm-dialog" id="confirmDialog">
+        <div class="confirm-content">
+            <h3 class="confirm-title">Confirm Delete</h3>
+            <p class="confirm-message">Are you sure you want to delete this transaction?</p>
+            <div class="confirm-buttons">
+                <button class="btn btn-secondary" id="confirmCancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmDelete" style="background: linear-gradient(135deg, var(--negative), #ff6b6b); border: none;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============ CATEGORIES ============
+        const INCOME_CATEGORIES = ['Salary', 'Business', 'Freelance', 'Affiliate', 'Investment', 'Other'];
+        const EXPENSE_CATEGORIES = ['Food', 'Transport', 'Shopping', 'Bills', 'Education', 'Business', 'Investment', 'Other'];
+        const ALL_CATEGORIES = [...new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES])];
+
+        // ============ STATE ============
+        let transactions = [];
+        let openingBalance = 0;
+        let currentTransactionId = null;
+        let currentChart = null;
+        let incomeChart = null;
+        let expenseChart = null;
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            initializeUI();
+            setupEventListeners();
+            updateDashboard();
+            renderTransactions();
+            updateCategoryFilters();
+            setTodayDate();
+            updateCurrentDate();
+            setInterval(updateCurrentDate, 60000);
+        });
+
+        // ============ DATA MANAGEMENT ============
+        function loadData() {
+            try {
+                const stored = localStorage.getItem('financial_transactions');
+                transactions = stored ? JSON.parse(stored) : [];
+                const balance = localStorage.getItem('financial_opening_balance');
+                openingBalance = balance ? parseFloat(balance) : 0;
+            } catch (e) {
+                console.error('Error loading data:', e);
+                transactions = [];
+                openingBalance = 0;
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('financial_transactions', JSON.stringify(transactions));
+                localStorage.setItem('financial_opening_balance', openingBalance.toString());
+            } catch (e) {
+                console.error('Error saving data:', e);
+                showToast('Error saving data', 'error');
+            }
+        }
+
+        function addTransaction(type, amount, category, description, date, payment) {
+            const transaction = {
+                id: Date.now().toString(),
+                type,
+                amount: parseFloat(amount),
+                category,
+                description,
+                date,
+                payment
+            };
+            transactions.push(transaction);
+            saveData();
+            return transaction;
+        }
+
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveData();
+        }
+
+        function updateTransaction(id, type, amount, category, description, date, payment) {
+            const index = transactions.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactions[index] = { id, type, amount: parseFloat(amount), category, description, date, payment };
+                saveData();
+            }
+        }
+
+        // ============ CALCULATIONS ============
+        function getTotalIncome() {
+            return transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        }
+
+        function getTotalExpense() {
+            return transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+        }
+
+        function getNetProfit() {
+            return getTotalIncome() - getTotalExpense();
+        }
+
+        function getBalance() {
+            return openingBalance + getNetProfit();
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        // ============ UI UPDATES ============
+        function updateDashboard() {
+            const totalIncome = getTotalIncome();
+            const totalExpense = getTotalExpense();
+            const netProfit = getNetProfit();
+            const balance = getBalance();
+
+            animateCounter('totalIncomeValue', totalIncome);
+            animateCounter('totalExpenseValue', totalExpense);
+            animateCounter('netProfitValue', netProfit);
+            animateCounter('balanceValue', balance);
+
+            updateChart();
+        }
+
+        function animateCounter(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const duration = 600;
+            const startValue = 0;
+            const startTime = Date.now();
+
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                element.textContent = formatCurrency(currentValue);
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            update();
+        }
+
+        function updateChart() {
+            const filter = document.querySelector('.filter-btn.active')?.dataset.filter || '7days';
+            const chartData = getChartData(filter);
+
+            if (!chartData.labels || chartData.labels.length === 0) {
+                const ctx = document.getElementById('revenueChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = `
+                        <div class="empty-state">
+                            <svg style="width: 48px; height: 48px; opacity: 0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h18v18H3z"></path>
+                                <path d="M3 9h18M3 15h18M9 6v12M15 6v12"></path>
+                            </svg>
+                            <div>No financial data yet</div>
+                        </div>
+                    `;
+                }
+                if (currentChart) {
+                    currentChart.destroy();
+                    currentChart = null;
+                }
+                return;
+            }
+
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            if (currentChart) {
+                currentChart.data = chartData;
+                currentChart.update();
+            } else {
+                currentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: 'var(--text-primary)',
+                                    font: { size: 13 }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: 'var(--text-secondary)' },
+                                grid: { color: 'rgba(0, 212, 255, 0.05)' }
+                            },
+                            x: {
+                                ticks: { color: 'var(--text-secondary)' },
+                                grid: { color: 'rgba(0, 212, 255, 0.05)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function getChartData(filter) {
+            const now = new Date();
+            let startDate = new Date();
+
+            if (filter === '7days') startDate.setDate(now.getDate() - 7);
+            else if (filter === '30days') startDate.setDate(now.getDate() - 30);
+            else if (filter === '3months') startDate.setMonth(now.getMonth() - 3);
+            else if (filter === '6months') startDate.setMonth(now.getMonth() - 6);
+            else if (filter === '1year') startDate.setFullYear(now.getFullYear() - 1);
+
+            const filtered = transactions.filter(t => new Date(t.date) >= startDate);
+
+            if (filtered.length === 0) {
+                return { labels: [], datasets: [] };
+            }
+
+            const dataMap = {};
+            filtered.forEach(t => {
+                const date = t.date;
+                if (!dataMap[date]) dataMap[date] = { income: 0, expense: 0 };
+                if (t.type === 'income') dataMap[date].income += t.amount;
+                else dataMap[date].expense += t.amount;
+            });
+
+            const labels = Object.keys(dataMap).sort();
+            const incomeData = labels.map(date => dataMap[date].income);
+            const expenseData = labels.map(date => dataMap[date].expense);
+
+            return {
+                labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgb(16, 185, 129)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expense',
+                        data: expenseData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 1
+                    }
+                ]
+            };
+        }
+
+        function renderTransactions(filtered = null) {
+            const tbody = document.getElementById('transactionsTableBody');
+            if (!tbody) return;
+
+            const toDisplay = filtered || transactions;
+
+            if (toDisplay.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            No transactions yet
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = toDisplay.map(t => `
+                <tr>
+                    <td>${formatDate(t.date)}</td>
+                    <td>${t.description || '-'}</td>
+                    <td>${t.category}</td>
+                    <td>
+                        <span class="transaction-type ${t.type}">
+                            ${t.type === 'income' ? '↑ Income' : '↓ Expense'}
+                        </span>
+                    </td>
+                    <td>${t.payment}</td>
+                    <td>
+                        <span class="transaction-amount ${t.type}">
+                            ${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-icons">
+                            <button class="icon-btn edit-btn" data-id="${t.id}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94M3 17.25l7.06-7.06m10.75-2.69l-2.12-2.12a1.5 1.5 0 00-2.12 0l-2.12 2.12"></path>
+                                </svg>
+                            </button>
+                            <button class="icon-btn delete delete-btn" data-id="${t.id}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M3 6v14a2 2 0 002 2h14a2 2 0 002-2V6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Event listeners for edit/delete
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editTransaction(btn.dataset.id));
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => showDeleteConfirm(btn.dataset.id));
+            });
+        }
+
+        function editTransaction(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+
+            document.getElementById('transactionType').value = transaction.type;
+            document.getElementById('transactionId').value = id;
+            document.getElementById('amount').value = transaction.amount;
+            document.getElementById('category').value = transaction.category;
+            document.getElementById('description').value = transaction.description;
+            document.getElementById('date').value = transaction.date;
+            document.getElementById('payment').value = transaction.payment;
+
+            document.getElementById('modalTitle').textContent = transaction.type === 'income' ? 'Edit Income' : 'Edit Expense';
+            updateCategories(transaction.type);
+            openModal();
+        }
+
+        function updateCategoryFilters() {
+            const select = document.getElementById('categoryFilter');
+            if (!select) return;
+
+            const categories = [...new Set(transactions.map(t => t.category))];
+            const options = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            select.innerHTML = '<option value="">All Categories</option>' + options;
+        }
+
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }).format(new Date(date));
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+
+        function updateCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date().toLocaleDateString('id-ID', options);
+            document.getElementById('currentDate').textContent = today;
+        }
+
+        // ============ MODAL HANDLING ============
+        function openModal() {
+            document.getElementById('transactionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('transactionModal').classList.remove('active');
+            document.getElementById('transactionForm').reset();
+            document.getElementById('transactionId').value = '';
+            setTodayDate();
+        }
+
+        function updateCategories(type) {
+            const select = document.getElementById('category');
+            const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+            select.innerHTML = '<option value="">Select category</option>' + 
+                categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        // ============ FORM HANDLING ============
+        document.getElementById('transactionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const type = document.getElementById('transactionType').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+            const date = document.getElementById('date').value;
+            const payment = document.getElementById('payment').value;
+            const transactionId = document.getElementById('transactionId').value;
+
+            if (!amount || amount <= 0) {
+                showToast('Amount must be greater than 0', 'error');
+                return;
+            }
+
+            if (!category) {
+                showToast('Please select a category', 'error');
+                return;
+            }
+
+            if (!date) {
+                showToast('Please select a date', 'error');
+                return;
+            }
+
+            if (!payment) {
+                showToast('Please select a payment method', 'error');
+                return;
+            }
+
+            if (transactionId) {
+                updateTransaction(transactionId, type, amount, category, description, date, payment);
+                showToast('Transaction updated successfully', 'success');
+            } else {
+                addTransaction(type, amount, category, description, date, payment);
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} added successfully`, 'success');
+            }
+
+            closeModal();
+            updateDashboard();
+            renderTransactions();
+            updateCategoryFilters();
+        });
+
+        // ============ EVENT LISTENERS ============
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+
+                    const page = link.dataset.page;
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(page + 'Page').classList.add('active');
+
+                    if (page === 'reports') renderCategoryCharts();
+                });
+            });
+
+            // Add Income/Expense buttons
+            document.getElementById('addIncomeBtn').addEventListener('click', () => {
+                document.getElementById('transactionType').value = 'income';
+                document.getElementById('modalTitle').textContent = 'Add Income';
+                updateCategories('income');
+                openModal();
+            });
+
+            document.getElementById('addExpenseBtn').addEventListener('click', () => {
+                document.getElementById('transactionType').value = 'expense';
+                document.getElementById('modalTitle').textContent = 'Add Expense';
+                updateCategories('expense');
+                openModal();
+            });
+
+            document.getElementById('addIncomeBtn2').addEventListener('click', () => {
+                document.getElementById('transactionType').value = 'income';
+                document.getElementById('modalTitle').textContent = 'Add Income';
+                updateCategories('income');
+                openModal();
+            });
+
+            document.getElementById('addExpenseBtn2').addEventListener('click', () => {
+                document.getElementById('transactionType').value = 'expense';
+                document.getElementById('modalTitle').textContent = 'Add Expense';
+                updateCategories('expense');
+                openModal();
+            });
+
+            document.getElementById('viewTransactionsBtn').addEventListener('click', () => {
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                document.querySelector('[data-page="transactions"]').classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('transactionsPage').classList.add('active');
+            });
+
+            // Modal
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeModal);
+
+            document.getElementById('transactionModal').addEventListener('click', (e) => {
+                if (e.target.id === 'transactionModal') closeModal();
+            });
+
+            // Chart filters
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateChart();
+                });
+            });
+
+            // Transaction filters and search
+            document.getElementById('transactionSearch').addEventListener('input', (e) => {
+                filterTransactions();
+            });
+
+            document.getElementById('typeFilter').addEventListener('change', () => {
+                filterTransactions();
+            });
+
+            document.getElementById('categoryFilter').addEventListener('change', () => {
+                filterTransactions();
+            });
+
+            document.getElementById('sortBy').addEventListener('change', () => {
+                filterTransactions();
+            });
+
+            // Settings
+            document.getElementById('saveBalanceBtn').addEventListener('click', () => {
+                const balance = parseFloat(document.getElementById('openingBalance').value) || 0;
+                openingBalance = balance;
+                saveData();
+                updateDashboard();
+                document.getElementById('currentOpeningBalance').textContent = formatCurrency(balance);
+                showToast('Opening balance saved', 'success');
+            });
+
+            document.getElementById('exportDataBtn').addEventListener('click', () => {
+                const data = {
+                    transactions,
+                    openingBalance,
+                    exportDate: new Date().toISOString()
+                };
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `financial-data-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                showToast('Data exported successfully', 'success');
+            });
+
+            document.getElementById('clearDataBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+                    transactions = [];
+                    openingBalance = 0;
+                    saveData();
+                    updateDashboard();
+                    renderTransactions();
+                    updateCategoryFilters();
+                    document.getElementById('openingBalance').value = '';
+                    document.getElementById('currentOpeningBalance').textContent = 'Rp 0';
+                    showToast('All data cleared', 'success');
+                }
+            });
+
+            // Confirm dialog
+            document.getElementById('confirmCancel').addEventListener('click', () => {
+                document.getElementById('confirmDialog').classList.remove('active');
+            });
+
+            document.getElementById('confirmDelete').addEventListener('click', () => {
+                if (currentTransactionId) {
+                    deleteTransaction(currentTransactionId);
+                    showToast('Transaction deleted', 'success');
+                    updateDashboard();
+                    renderTransactions();
+                    updateCategoryFilters();
+                    currentTransactionId = null;
+                }
+                document.getElementById('confirmDialog').classList.remove('active');
+            });
+
+            document.getElementById('confirmDialog').addEventListener('click', (e) => {
+                if (e.target.id === 'confirmDialog') {
+                    document.getElementById('confirmDialog').classList.remove('active');
+                }
+            });
+
+            // Display current opening balance
+            document.getElementById('currentOpeningBalance').textContent = formatCurrency(openingBalance);
+        }
+
+        function filterTransactions() {
+            const search = document.getElementById('transactionSearch').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filtered = transactions.filter(t => {
+                const matchSearch = !search || 
+                    t.description.toLowerCase().includes(search) ||
+                    t.category.toLowerCase().includes(search);
+                const matchType = !typeFilter || t.type === typeFilter;
+                const matchCategory = !categoryFilter || t.category === categoryFilter;
+
+                return matchSearch && matchType && matchCategory;
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                if (sortBy === 'newest') return new Date(b.date) - new Date(a.date);
+                if (sortBy === 'oldest') return new Date(a.date) - new Date(b.date);
+                if (sortBy === 'highest') return b.amount - a.amount;
+                if (sortBy === 'lowest') return a.amount - b.amount;
+                return 0;
+            });
+
+            renderTransactions(filtered);
+        }
+
+        function showDeleteConfirm(id) {
+            currentTransactionId = id;
+            document.getElementById('confirmDialog').classList.add('active');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function renderCategoryCharts() {
+            const incomeByCategory = {};
+            const expenseByCategory = {};
+
+            transactions.forEach(t => {
+                if (t.type === 'income') {
+                    incomeByCategory[t.category] = (incomeByCategory[t.category] || 0) + t.amount;
+                } else {
+                    expenseByCategory[t.category] = (expenseByCategory[t.category] || 0) + t.amount;
+                }
+            });
+
+            renderCategoryChart('incomeCategoryChart', incomeByCategory, 'Income');
+            renderCategoryChart('expenseCategoryChart', expenseByCategory, 'Expense');
+        }
+
+        function renderCategoryChart(canvasId, data, label) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (Object.keys(data).length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="empty-state">
+                        <svg style="width: 48px; height: 48px; opacity: 0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        <div>No ${label.toLowerCase()} data yet</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+            const colors = ['#00d4ff', '#00e5ff', '#0ba5ec', '#06b6d4', '#10b981', '#f59e0b'];
+
+            if (window[canvasId + '_chart']) {
+                window[canvasId + '_chart'].destroy();
+            }
+
+            window[canvasId + '_chart'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: 'var(--secondary-dark)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: 'var(--text-primary)',
+                                font: { size: 13 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
